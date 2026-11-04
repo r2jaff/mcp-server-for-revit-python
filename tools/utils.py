@@ -93,7 +93,15 @@ def format_response(response):
             if "output" in response:  # Code execution responses
                 return response["output"]
             elif "message" in response:
-                return response["message"]
+                # Keep the fields that come with the message (paths, counts,
+                # color assignments, view warnings, ...) instead of dropping them.
+                extra = {k: v for k, v in response.items()
+                         if k not in ("status", "message")}
+                if not extra:
+                    return response["message"]
+                return "{}\n\n{}".format(
+                    response["message"],
+                    json.dumps(extra, indent=2, default=str, sort_keys=True))
             elif "result" in response:
                 return str(response["result"])
             elif "data" in response:

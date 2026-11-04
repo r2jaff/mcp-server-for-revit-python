@@ -14,6 +14,29 @@ class TestSuccessResponses:
         result = format_response({"status": "success", "message": "Done"})
         assert result == "Done"
 
+    def test_success_message_keeps_other_fields(self):
+        # e.g. save_document's Save As: the path and save type must reach the caller
+        result = format_response({
+            "status": "success",
+            "message": "Document saved as 'C:/out.rvt'.",
+            "saved_path": "C:/out.rvt",
+            "save_type": "save_as",
+        })
+        message, _, rest = result.partition("\n\n")
+        assert message == "Document saved as 'C:/out.rvt'."
+        assert json.loads(rest) == {"saved_path": "C:/out.rvt", "save_type": "save_as"}
+
+    def test_success_message_keeps_view_warning(self):
+        # color_splash reports a visual-style warning next to its message
+        result = format_response({
+            "status": "success",
+            "message": "Successfully colored 3 elements in 2 color groups",
+            "statistics": {"elements_colored": 3},
+            "view_warning": {"warning": "Current visual style may not show colors well"},
+        })
+        assert "Current visual style may not show colors well" in result
+        assert '"elements_colored": 3' in result
+
     def test_success_with_result(self):
         result = format_response({"status": "success", "result": 42})
         assert result == "42"
